@@ -1,0 +1,19 @@
+@import "../bootstrap/scss/bootstrap";
+
+.text-bg-green {
+  color: $green-700;
+  background-color: $green-300;
+}
+
+.text-bg-blue {
+  color: $blue-700;
+  background-color: $blue-300;
+}
+
+.border-green {
+  border-color: $green-500 !important;
+}
+
+.border-blue {
+  border-color: $blue-500 !important;
+}

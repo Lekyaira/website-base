@@ -1,0 +1,7 @@
+#!/bin/sh
+# If MySQL isn't running, start it.
+# This command will point the service at the correct data, and will
+# select an open Unix port, then save it to a file.
+if [ ! $(mysqladmin status -u root --socket=$MYSQL_UNIX_PORT) ]; then
+  mysqld_safe --no-defaults --datadir=$MYSQL_DATA --skip-networking --socket=$MYSQL_UNIX_PORT &
+fi

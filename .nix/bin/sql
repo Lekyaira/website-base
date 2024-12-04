@@ -1,0 +1,3 @@
+#!/bin/sh
+# Just a helper so we don't have to enter all this to access MySQL cli.
+mysql -u root --socket=$MYSQL_UNIX_PORT

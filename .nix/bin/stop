@@ -1,0 +1,4 @@
+#!/bin/sh
+# Shut down the MySQL service nicely then delete the saved port.
+mysqladmin -u root --socket=$MYSQL_UNIX_PORT shutdown
+rm -f $MYSQL_UNIX_PORT
