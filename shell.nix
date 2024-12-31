@@ -8,6 +8,11 @@ let
   ];
   # Get project directory.
   pd = builtins.toString ./.;
+  # Combine the outputs from `openssl.dev` and `openssl.out` into a single output.
+  openssl_combined = pkgs.symlinkJoin { 
+    name = "openssl-dev-out"; 
+    paths = (with pkgs; [ openssl.dev openssl.out ]);
+  };
 in
 pkgs.mkShell {
   packages = with pkgs; [
@@ -18,6 +23,8 @@ pkgs.mkShell {
     wasm-pack
     mysql80
     dart-sass
+    sea-orm-cli
+    openssl_combined
   ];
 
 # Fix Cargo build errors and contain everything for reproducibility.
@@ -29,6 +36,10 @@ pkgs.mkShell {
   MYSQL_DATA = "${pd}/.nix/mysql/data";
 # MySQL Unix port file location.
   MYSQL_UNIX_PORT = "${pd}/.nix/mysql/mysql.sock";
+
+  # OpenSSL directory
+  OPENSSL_DIR = "${openssl_combined}";
+  LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ openssl_combined ];
 
   shellHook = ''
     #### MYSQL ####
@@ -65,5 +76,8 @@ pkgs.mkShell {
     #### Utils ####
     BINDIR=${pd}/.nix/bin 
     export PATH=$PATH:$BINDIR
+
+    #### Seaorm Alias ####
+    alias sea="sea-orm-cli"
   '';
 }

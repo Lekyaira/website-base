@@ -1,0 +1,8 @@
+#!/bin/sh
+if [ -z $1 ]; then
+  echo "You must enter the name of the database to migrate."
+else
+  export DATABASE_URL="mysql://root@localhost/$1?socket=$MYSQL_UNIX_PORT"
+  sea-orm-cli migrate refresh
+  sea-orm-cli generate entity -u $DATABASE_URL -o src/entities
+fi
