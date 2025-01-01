@@ -1,40 +1,73 @@
+use std::error::Error;
+use std::fmt;
+use async_trait::async_trait;
 use crate::db::prelude::*;
 use crate::models::prelude::*;
 
 #[cfg(feature = "ssr")]
+#[derive(Debug)]
 pub struct MockDb;
 #[cfg(feature = "ssr")]
 impl MockDb {
-    pub fn new() -> Self {}
+    pub fn new() -> Self {
+        Self {}
+    }
 }
 #[cfg(feature = "ssr")]
+#[async_trait]
 impl Database for MockDb {
-    pub async fn get_posts() -> Result<Vec<Post>, Box<dyn Error>> {
-        let posts = vec![
-            Post {
-                id: 1,
-                title: "A Test Post".to_string(),
-                body: "This it a test post...".to_string(),
-                published: true,
-            },
-            Post {
-                id: 2,
-                title: "Another Test Post".to_string(),
-                body: "...What are you going to do about it??".to_string(),
-                published: true,
-            },
-            Post {
-                id: 3,
-                title: "And Another!".to_string(),
-                body: "Yes.".to_string(),
-                published: true,
-            },
-        ];
+    async fn get_posts(&self) -> Box<dyn Fn() -> Result<Vec<Post>, Box<dyn Error>>> {
+        Box::new(|| {
+            let posts = vec![
+                Post {
+                    id: 1,
+                    title: "A Test Post".to_string(),
+                    body: "This it a test post...".to_string(),
+                    published: true,
+                },
+                Post {
+                    id: 2,
+                    title: "Another Test Post".to_string(),
+                    body: "...What are you going to do about it??".to_string(),
+                    published: true,
+                },
+                Post {
+                    id: 3,
+                    title: "And Another!".to_string(),
+                    body: "Yes.".to_string(),
+                    published: true,
+                },
+            ];
 
-        Ok(posts)
+            Ok(posts)
+        })
     }
+    //async fn get_posts(&self) -> Result<Vec<Post>, Box<dyn Error>> {
+    //    let posts = vec![
+    //        Post {
+    //            id: 1,
+    //            title: "A Test Post".to_string(),
+    //            body: "This it a test post...".to_string(),
+    //            published: true,
+    //        },
+    //        Post {
+    //            id: 2,
+    //            title: "Another Test Post".to_string(),
+    //            body: "...What are you going to do about it??".to_string(),
+    //            published: true,
+    //        },
+    //        Post {
+    //            id: 3,
+    //            title: "And Another!".to_string(),
+    //            body: "Yes.".to_string(),
+    //            published: true,
+    //        },
+    //    ];
+    //
+    //    Ok(posts)
+    //}
 
-    pub async fn get_post(id: i32) -> Result<Post, Box<dyn Error>> {
+    async fn get_post(&self, id: i32) -> Result<Post, Box<dyn Error>> {
         let post = Post {
             id: 42,
             title: "A Post".to_string(),
@@ -45,15 +78,15 @@ impl Database for MockDb {
         Ok(post)
     }
 
-    pub async fn create_post(post: Post) -> Result<i32, Box<dyn Error>> {
+    async fn create_post(&self, post: Post) -> Result<i32, Box<dyn Error>> {
         Ok(43)
     }
 
-    pub async fn update_post(post: Post) -> Result<(), Box<dyn Error>> {
+    async fn update_post(&self, post: Post) -> Result<(), Box<dyn Error>> {
         Ok(())
     }
 
-    pub async fn delete_post(id: i32) -> Result<(), Box<dyn Error>> {
+    async fn delete_post(&self, id: i32) -> Result<(), Box<dyn Error>> {
         Ok(())
     }
 }

@@ -2,15 +2,21 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
 async fn main() {
+    use std::sync::Mutex;
     use axum::Router;
     use leptos::logging::log;
     use leptos::prelude::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
     use leptos_ssr::app::*;
-    use crate::db::db::DATABASE_BACKING;
+    //use crate::db::db::DATABASE_BACKING;
+    use leptos_ssr::db::db::{db, DbBackingReader};
+    use leptos_ssr::mock::mockdb::MockDb;
 
     // Set up the database we'll be using.
-    DATABASE_BACKING.lock().unwrap() = Some(MockDb::new());
+    //let mut db_backing = DATABASE_BACKING.write().unwrap();
+    //*db_backing = Some(Box::new(MockDb::new()));
+    let mut db_backing = db().backing.lock().unwrap();
+    *db_backing = Some(Box::new(MockDb::new()));
 
     let conf = get_configuration(None).unwrap();
     let addr = conf.leptos_options.site_addr;

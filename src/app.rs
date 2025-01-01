@@ -59,8 +59,8 @@ fn HomePage() -> impl IntoView {
     let count = RwSignal::new(0);
     let on_click = move |_| *count.write() += 1;
 
-    let (posts_backing, set_posts_backing) = signal(Vec::<Post>::new());
-    let posts = Resource::new(posts_backing, |posts_backing| async move { get_posts().await.unwrap() });
+    //let (posts_backing, set_posts_backing) = signal(Vec::<Post>::new());
+    //let posts = Resource::new(posts_backing, |posts_backing| async move { get_posts().await.unwrap() });
 
     view! {
         <div class="container mx-auto">
@@ -74,19 +74,26 @@ fn HomePage() -> impl IntoView {
                 </button>
             </div>
         </div>
-        <Suspense
-            fallback=move || view! { <p>"Loading..."</p> }
-        >
-            <div class="container mx-auto">
-                <For
-                    each=move || posts.get().unwrap()
-                    key=|state| state.id.clone()
-                    let:post
-                >
-                    <h2>{post.title}</h2>
-                    <p>{post.body}</p>
-                </For>
-            </div>
-        </Suspense>
+        <button on:click=move |_| {
+            leptos::task::spawn_local(async {
+                let stuff = get_posts().await;
+            });
+        }>
+                "Get Posts"
+        </button>
+        //<Suspense
+        //    fallback=move || view! { <p>"Loading..."</p> }
+        //>
+        //    <div class="container mx-auto">
+        //        <For
+        //            each=move || posts.get().unwrap()
+        //            key=|state| state.id.clone()
+        //            let:post
+        //        >
+        //            <h2>{post.title}</h2>
+        //            <p>{post.body}</p>
+        //        </For>
+        //    </div>
+        //</Suspense>
     }
 }

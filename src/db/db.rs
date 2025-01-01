@@ -1,13 +1,43 @@
 use std::{
-    sync::Mutex,
+    sync::{ Mutex, Once },
+    mem::MaybeUninit,
     fmt,
     error::Error,
 };
 use leptos::prelude::*;
+use leptos::logging;
+use async_trait::async_trait;
 use crate::models::prelude::*;
 
+//#[cfg(feature = "ssr")]
+//pub static DATABASE_BACKING: RwLock<Option<Box<dyn Database>>> = RwLock::new(None);
+
 #[cfg(feature = "ssr")]
-pub static DATABASE_BACKING: Mutex<Option<dyn Database>> = Mutex::new(None);
+pub struct DbBackingReader {
+    //backing: Mutex<Option<Box<dyn Database + fmt::Display>>>,
+    pub backing: Mutex<Option<Box<dyn Database>>>,
+}
+
+#[cfg(feature = "ssr")]
+pub fn db() -> &'static DbBackingReader {
+    // Create an uninitialized static.
+    static mut SINGLETON: MaybeUninit<DbBackingReader> = MaybeUninit::uninit();
+    static ONCE: Once = Once::new();
+
+    unsafe {
+        ONCE.call_once(|| {
+            // Initialize singleton.
+            let singleton = DbBackingReader {
+                backing: Mutex::new(None),
+            };
+            // Store it to the static singleton var.
+            SINGLETON.write(singleton);
+        });
+
+        // Give out a shared reference to the data, which is safe to use.
+        SINGLETON.assume_init_ref()
+    }
+}
 
 #[derive(Debug)]
 pub enum DbError {
@@ -23,24 +53,36 @@ impl fmt::Display for DbError {
 }
 
 #[cfg(feature = "ssr")]
-pub trait Database {
-    pub async fn get_posts() -> Result<Vec<Post>, Box<dyn Error>>;
-    pub async fn get_post(id: i32) -> Result<Post, Box<dyn Error>>;
-    pub async fn create_post(post: Post) -> Result<i32, Box<dyn Error>>;
-    pub async fn update_post(post: Post) -> Result<(), Box<dyn Error>>;
-    pub async fn delete_post(id: i32) -> Result<(), Box<dyn Error>>;
+#[async_trait]
+pub trait Database: Send {
+    async fn get_posts(&self) -> Box<dyn Fn() -> Result<Vec<Post>, Box<dyn Error>>>;
+    async fn get_post(&self, id: i32) -> Result<Post, Box<dyn Error>>;
+    async fn create_post(&self, post: Post) -> Result<i32, Box<dyn Error>>;
+    async fn update_post(&self, post: Post) -> Result<(), Box<dyn Error>>;
+    async fn delete_post(&self, id: i32) -> Result<(), Box<dyn Error>>;
+}
+#[cfg(feature = "ssr")]
+impl fmt::Debug for dyn Database {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Database")
+    }
 }
 
 #[server]
 pub async fn get_posts() -> Result<Vec<Post>, ServerFnError> {
-    match DATABASE_BACKING.lock().unwrap() {
-        Some(db) => {
-            match db.get_posts() {
-                Ok(posts) => posts,
-                Err(e) => Err(ServerFnError::ServerError(e.to_string())),
-            }
-        }
-        None => Err(ServerFnError::ServerError(DbError::BackingNotSet.to_string())),
-
-    } 
+    //match DATABASE_BACKING.read().unwrap() {
+    let backing = db().backing.lock().unwrap();
+    logging::log!("{:?}", backing);
+    Ok(vec![])
+    //let mut posts;
+    //match backing {
+    //    Some(db) => posts = db.get_posts(),
+    //    None => Err(ServerFnError::ServerError(DbError::BackingNotSet.to_string())),
+    //} 
+    //posts().await;
+    //match posts {
+    //    Ok(posts) => Ok(posts),
+    //    Err(e) => Err(ServerFnError::ServerError(e.to_string())),
+    //}
 }
+
