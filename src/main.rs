@@ -7,6 +7,10 @@ async fn main() {
     use leptos::prelude::*;
     use leptos_axum::{generate_route_list, LeptosRoutes};
     use leptos_ssr::app::*;
+    use crate::db::db::DATABASE_BACKING;
+
+    // Set up the database we'll be using.
+    DATABASE_BACKING.lock().unwrap() = Some(MockDb::new());
 
     let conf = get_configuration(None).unwrap();
     let addr = conf.leptos_options.site_addr;
