@@ -4,6 +4,7 @@ use leptos_router::{
     components::{Route, Router, Routes},
     StaticSegment,
 };
+use leptos::logging;
 use crate::models::prelude::*;
 use crate::mock::prelude::*;
 use crate::db::prelude::*;
@@ -59,8 +60,13 @@ fn HomePage() -> impl IntoView {
     let count = RwSignal::new(0);
     let on_click = move |_| *count.write() += 1;
 
-    //let (posts_backing, set_posts_backing) = signal(Vec::<Post>::new());
-    //let posts = Resource::new(posts_backing, |posts_backing| async move { get_posts().await.unwrap() });
+    let (posts_backing, set_posts_backing) = signal(Vec::<Post>::new());
+    let posts = Resource::new(posts_backing, |posts_backing| async move { 
+        get_posts().await.unwrap_or_else(|e| {
+            logging::log!("Error: {}", e.to_string());
+            vec![]
+        })
+    });
 
     view! {
         <div class="container mx-auto">
@@ -74,13 +80,31 @@ fn HomePage() -> impl IntoView {
                 </button>
             </div>
         </div>
-        <button on:click=move |_| {
-            leptos::task::spawn_local(async {
-                let stuff = get_posts().await;
-            });
-        }>
-                "Get Posts"
-        </button>
+        <hr/>
+        <div class="container mx-auto">
+            <Suspense 
+                fallback=move || view! { <p>"Loading..."</p> }
+            >
+                <For 
+                    each=move || posts.get().unwrap_or_else(|| vec![])
+                    key=|state| state.id.clone()
+                    let:post
+                >
+                    <h2>{post.title}</h2>
+                    <p>{post.body}</p>
+                </For>
+            </Suspense>
+        </div>
+        //<button on:click=move |_| {
+        //    let result = leptos::task::spawn_local(async {
+        //        match get_posts().await {
+        //            Err(e) => logging::log!("Error: {}", e.to_string()),
+        //            Ok(r) => logging::log!("{:?}", r),
+        //        }
+        //    });
+        //}>
+        //        "Get Posts"
+        //</button>
         //<Suspense
         //    fallback=move || view! { <p>"Loading..."</p> }
         //>
