@@ -4,8 +4,13 @@ use leptos_router::{
     components::{Route, Router, Routes},
     StaticSegment,
 };
+use leptos::logging;
+use crate::models::prelude::*;
+use crate::mock::prelude::*;
+use crate::db::prelude::*;
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
+    // Set up the app's shell html.
     view! {
         <!DOCTYPE html>
         <html lang="en">
@@ -55,6 +60,14 @@ fn HomePage() -> impl IntoView {
     let count = RwSignal::new(0);
     let on_click = move |_| *count.write() += 1;
 
+    let (posts_backing, set_posts_backing) = signal(Vec::<Post>::new());
+    let posts = Resource::new(posts_backing, |posts_backing| async move { 
+        get_posts().await.unwrap_or_else(|e| {
+            logging::log!("Error: {}", e.to_string());
+            vec![]
+        })
+    });
+
     view! {
         <div class="container mx-auto">
             <h1 class="text-center">"Welcome to Leptos, with Bootstrap!"</h1>
@@ -67,5 +80,44 @@ fn HomePage() -> impl IntoView {
                 </button>
             </div>
         </div>
+        <hr/>
+        <div class="container mx-auto">
+            <Suspense 
+                fallback=move || view! { <p>"Loading..."</p> }
+            >
+                <For 
+                    each=move || posts.get().unwrap_or_else(|| vec![])
+                    key=|state| state.id.clone()
+                    let:post
+                >
+                    <h2>{post.title}</h2>
+                    <p>{post.body}</p>
+                </For>
+            </Suspense>
+        </div>
+        //<button on:click=move |_| {
+        //    let result = leptos::task::spawn_local(async {
+        //        match get_posts().await {
+        //            Err(e) => logging::log!("Error: {}", e.to_string()),
+        //            Ok(r) => logging::log!("{:?}", r),
+        //        }
+        //    });
+        //}>
+        //        "Get Posts"
+        //</button>
+        //<Suspense
+        //    fallback=move || view! { <p>"Loading..."</p> }
+        //>
+        //    <div class="container mx-auto">
+        //        <For
+        //            each=move || posts.get().unwrap()
+        //            key=|state| state.id.clone()
+        //            let:post
+        //        >
+        //            <h2>{post.title}</h2>
+        //            <p>{post.body}</p>
+        //        </For>
+        //    </div>
+        //</Suspense>
     }
 }

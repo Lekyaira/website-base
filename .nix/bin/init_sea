@@ -1,0 +1,7 @@
+#!/bin/sh
+printf "DATABASE_SERVER_AUTH=root@localhost\nDATABASE_SOCKET=$MYSQL_UNIX_PORT\n" > .env
+cargo add sea-orm --features="sqlx-mysql, runtime-async-std-native-tls, macros"
+cargo add futures
+sea-orm-cli migrate init
+rm migration/Cargo.toml
+cp .nix/migration/Cargo.toml migration/
