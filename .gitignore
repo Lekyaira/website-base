@@ -15,6 +15,3 @@ Cargo.lock
 
 # Nix-direnv
 /.envrc
-
-# MySql stuff
-/.nix/mysql
